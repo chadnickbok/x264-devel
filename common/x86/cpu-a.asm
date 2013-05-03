@@ -66,7 +66,24 @@ cglobal cpu_xgetbv, 3,7
     mov [r4], edx
     RET
 
-%if ARCH_X86_64 == 0
+%if ARCH_X86_64
+
+;-----------------------------------------------------------------------------
+; void stack_align( void (*func)(void*), void *arg );
+;-----------------------------------------------------------------------------
+cglobal stack_align
+    push rbp
+    mov  rbp, rsp
+    and  rsp, ~31
+    mov  rax, r0
+    mov   r0, r1
+    mov   r1, r2
+    mov   r2, r3
+    call rax
+    leave
+    ret
+
+%else
 
 ;-----------------------------------------------------------------------------
 ; int cpu_cpuid_test( void )
@@ -94,14 +111,11 @@ cglobal cpu_cpuid_test
     popfd
     ret
 
-;-----------------------------------------------------------------------------
-; void stack_align( void (*func)(void*), void *arg );
-;-----------------------------------------------------------------------------
 cglobal stack_align
     push ebp
     mov  ebp, esp
     sub  esp, 12
-    and  esp, ~15
+    and  esp, ~31
     mov  ecx, [ebp+8]
     mov  edx, [ebp+12]
     mov  [esp], edx
